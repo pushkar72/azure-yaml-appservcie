@@ -47,6 +47,13 @@ stages:
         steps:
         - download: current
           artifact: 'website'
+        
+        - task: AzureKeyVault@2
+          inputs:
+            azureSubscription: 'Visual Studio Ultimate with MSDN(d2d9ddb9-e1e6-468e-8f8e-7789613307a2)'
+            KeyVaultName: 'autmatekv323'
+            SecretsFilter: '*'
+            RunAsPreJob: true
         - task: AzureRmWebAppDeployment@4
           inputs:
             ConnectionType: 'AzureRM'
@@ -54,5 +61,5 @@ stages:
             appType: 'webApp'
             WebAppName: 'fithnesswebapp32'
             packageForLinux: '$(Pipeline.Workspace)\website\*.zip'
-            AppSettings: '-Message "Deployed with YAML"'
+            AppSettings: '-Message "$(KVProdMessage)"'
 
