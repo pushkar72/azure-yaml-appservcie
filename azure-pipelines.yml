@@ -1,57 +1,61 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
-trigger:
-- yamldemo
-
-pool:
-  vmImage: ubuntu-20.04
 
 variables:
-  buildConfiguration: 'Release'
+  RestoreBuildProjects: '**/*.csproj'
 
-steps:
-- task: DotNetCoreCLI@2
-  displayName: Restore
-  inputs:
-    command: restore
-    projects: '$(Parameters.RestoreBuildProjects)'
 
-- task: DotNetCoreCLI@2
-  displayName: Build
-  inputs:
-    projects: '$(Parameters.RestoreBuildProjects)'
-    arguments: '--configuration $(BuildConfiguration)'
+stages:
+  - stage: Build
+    displayName: Deploy to App Service
+    jobs:
+    - job: Build
+      pool:
+        vmImage: ubuntu-20.04
+      steps:
+      - task: DotNetCoreCLI@2
+        displayName: Restore
+        inputs:
+          command: restore
+          projects: '$(Parameters.RestoreBuildProjects)'
 
-- task: DotNetCoreCLI@2
-  displayName: Test
-  inputs:
-    command: test
-    projects: '$(Parameters.TestProjects)'
-    arguments: '--configuration $(BuildConfiguration)'
-  enabled: false
+      - task: DotNetCoreCLI@2
+        displayName: Build
+        inputs:
+          projects: '$(Parameters.RestoreBuildProjects)'
 
-- task: DotNetCoreCLI@2
-  displayName: Publish
-  inputs:
-    command: publish
-    publishWebProjects: True
-    arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'
-    zipAfterPublish: True
+      - task: DotNetCoreCLI@2
+        displayName: Publish
+        inputs:
+          command: publish
+          publishWebProjects: True
+          arguments: '--output $(build.artifactstagingdirectory)'
+          zipAfterPublish: True
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact'
-  inputs:
-    PathtoPublish: '$(build.artifactstagingdirectory)'
-  condition: succeededOrFailed()
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish Artifact'
+        inputs:
+          PathtoPublish: '$(build.artifactstagingdirectory)'
+        condition: succeededOrFailed()
+        
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: '$(build.artifactstagingdirectory)'
+          artifact: 'website'
+          publishLocation: 'pipeline'
+  
+  - stage: Deploy
+    displayName: Deploy to Azure App Service
+    jobs:
+      - job: Deploy
+        pool:
+          vmImage: windows-latest
+        steps:
+        - task: AzureRmWebAppDeployment@4
+          inputs:
+            ConnectionType: 'AzureRM'
+            azureSubscription: 'Visual Studio Ultimate with MSDN(d2d9ddb9-e1e6-468e-8f8e-7789613307a2)'
+            appType: 'webApp'
+            WebAppName: 'fithnesswebapp32'
+            packageForLinux: '$(Pipeline.Workspace)/**/website.zip'
+            AppSettings: '-Message "Deployed with YAML"'
 
-- task: AzureRmWebAppDeployment@4
-  inputs:
-    ConnectionType: 'AzureRM'
-    azureSubscription: 'Visual Studio Ultimate with MSDN(d2d9ddb9-e1e6-468e-8f8e-7789613307a2)'
-    appType: 'webApp'
-    WebAppName: 'fithnesswebapp32'
-    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
-    AppSettings: '-Message "App hosted via YAML on Azure"'
