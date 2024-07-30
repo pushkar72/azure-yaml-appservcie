@@ -30,32 +30,29 @@ stages:
           publishWebProjects: True
           arguments: '--output $(build.artifactstagingdirectory)'
           zipAfterPublish: True
-
-      - task: PublishBuildArtifacts@1
-        displayName: 'Publish Artifact'
-        inputs:
-          PathtoPublish: '$(build.artifactstagingdirectory)'
-        condition: succeededOrFailed()
         
       - task: PublishPipelineArtifact@1
         inputs:
-          targetPath: '$(build.artifactstagingdirectory)'
+          targetPath: '$(System.DefaultWorkingDirectory)/bin/website'
           artifact: 'website'
           publishLocation: 'pipeline'
   
   - stage: Deploy
+    dependsOn: Build
     displayName: Deploy to Azure App Service
     jobs:
       - job: Deploy
         pool:
           vmImage: windows-latest
         steps:
+        - download: current
+          artifact: 'website'
         - task: AzureRmWebAppDeployment@4
           inputs:
             ConnectionType: 'AzureRM'
             azureSubscription: 'Visual Studio Ultimate with MSDN(d2d9ddb9-e1e6-468e-8f8e-7789613307a2)'
             appType: 'webApp'
             WebAppName: 'fithnesswebapp32'
-            packageForLinux: '$(Pipeline.Workspace)/**/s.zip'
+            packageForLinux: '$(Pipeline.Workspace)\website\*.zip'
             AppSettings: '-Message "Deployed with YAML"'
 
