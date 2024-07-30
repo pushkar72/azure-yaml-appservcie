@@ -56,6 +56,6 @@ stages:
             azureSubscription: 'Visual Studio Ultimate with MSDN(d2d9ddb9-e1e6-468e-8f8e-7789613307a2)'
             appType: 'webApp'
             WebAppName: 'fithnesswebapp32'
-            packageForLinux: '$(Pipeline.Workspace)/**/website.zip'
+            packageForLinux: '$(Pipeline.Workspace)/**/website/s.zip'
             AppSettings: '-Message "Deployed with YAML"'
 
