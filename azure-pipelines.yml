@@ -46,3 +46,12 @@ steps:
   inputs:
     PathtoPublish: '$(build.artifactstagingdirectory)'
   condition: succeededOrFailed()
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'Visual Studio Ultimate with MSDN(d2d9ddb9-e1e6-468e-8f8e-7789613307a2)'
+    appType: 'webApp'
+    WebAppName: 'fithnesswebapp32'
+    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    AppSettings: '-Message "App hosted via YAML on Azure"'
